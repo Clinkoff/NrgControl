@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+#GradienteDivDireita {
+    background-image: linear-gradient(
+  to top ,
+  #1768AC 5%,    /* Começa em 5% */
+  #2541B2 25%,   /* Transição suave até 25% */
+  #03256C 95%    /* Mantém até 95% e continua até 100% */
+);
+}
+

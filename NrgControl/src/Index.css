@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@100;200;300;400;500;600;700;800;900&display=swap');
+body {
+    font-family: 'Exo 2', sans-serif;
+
+    background-image: linear-gradient(
+        to top right,
+        #0A4E87 0%,
+        #236E9F 35%,
+        #84E8FB 56%,
+        #84E8FB 100%
+    )
+}
