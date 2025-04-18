@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-#GradienteDivDireita {
+#DivDireita {
     background-image: linear-gradient(
   to top ,
   #1768AC 5%,    /* Começa em 5% */
@@ -9,3 +9,19 @@
 );
 }
 
+#DivEsquerda {
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+
+
+@media (max-width: 767px) {
+  #DivEsquerda {
+    position: relative;
+    height: auto;
+    padding: 2rem 0;
+  }
+}
