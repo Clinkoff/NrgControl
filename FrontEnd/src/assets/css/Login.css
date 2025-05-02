@@ -1,19 +1,97 @@
 @import "tailwindcss";
 
-#DivDireita {
-    background-image: linear-gradient(
-  to top ,
-  #1768AC 5%,    /* Começa em 5% */
-  #2541B2 25%,   /* Transição suave até 25% */
-  #03256C 95%    /* Mantém até 95% e continua até 100% */
-);
-}
-
 #DivEsquerda {
   position: relative;
   overflow: hidden;
+  animation: gradientShift 10s ease-in-out infinite;
 }
 
+
+
+/* Floating orbs animation */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Slide-in animation for text */
+.animate-slide-in {
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: slideIn 1s ease-out forwards;
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Delay for staggered animation */
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+/* Circular background effect (retained from previous) */
+#DivEsquerda::before {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(173, 216, 230, 0.8) 0%, transparent 70%);
+  top: 10%;
+  left: 10%;
+  border-radius: 50%;
+}
+
+#DivEsquerda::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(173, 216, 230, 0.6) 0%, transparent 70%);
+  top: 5%;
+  right: 10%;
+  border-radius: 50%;
+}
+
+
+#DivDireita {
+  background-image: linear-gradient(
+    to top,
+    #1768AC 5%, /* Começa em 5% */
+    #2541B2 25%, /* Transição suave até 25% */
+    #03256C 95% /* Mantém até 95% e continua até 100% */
+  );
+}
 
 @media (max-width: 767px) {
   #DivEsquerda {
