@@ -1,4 +1,5 @@
-import "./Login.css";
+import "../assets/css/login.css";
+import { Link } from "react-router-dom";
 
 function LoginForm() {
   return (
@@ -34,13 +35,8 @@ function LoginForm() {
               relatórios inteligentes
             </p>
 
-<<<<<<< HEAD:FrontEnd/src/pages/LoginForm.jsx
             {/* Elementos decoraticos Hover:*/}
             <div className="w-16 h-1 bg-blue-500 rounded-full transition-all duration-300 hover:w-24 hover:bg-blue-600 animate-slide-in delay-400"></div>
-=======
-            {/* Elemento decorativo (opcional) */}
-            <div className="w-16 h-1 bg-blue-500 rounded-full"></div>
->>>>>>> parent of a0896df (Commit - Estrutura de codigo):FrontEnd/src/LoginForm.jsx
           </div>
         </div>
 
@@ -85,9 +81,9 @@ function LoginForm() {
 
               <p className="text-center text-sm">
                 Ainda não tem uma conta?{" "}
-                <a href="#" className="font-semibold hover:underline">
+                <Link to="/registro" className="font-semibold hover:underline">
                   Crie Agora!
-                </a>
+                </Link>
               </p>
             </form>
           </div>
