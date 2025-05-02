@@ -8,6 +8,7 @@
 
 
 
+<<<<<<< HEAD:FrontEnd/src/assets/css/Login.css
 /* Floating orbs animation */
 .animate-float {
   animation: float 6s ease-in-out infinite;
@@ -92,6 +93,9 @@
     #03256C 95% /* Mantém até 95% e continua até 100% */
   );
 }
+=======
+
+>>>>>>> parent of a0896df (Commit - Estrutura de codigo):FrontEnd/src/Login.css
 
 @media (max-width: 767px) {
   #DivEsquerda {
