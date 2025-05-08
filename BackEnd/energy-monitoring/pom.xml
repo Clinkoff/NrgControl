@@ -47,10 +47,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+    		<groupId>mysql</groupId>
+   	 		<artifactId>mysql-connector-java</artifactId>
+    		<version>8.0.33</version> 
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
