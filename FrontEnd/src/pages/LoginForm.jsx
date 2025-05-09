@@ -10,41 +10,39 @@ function LoginForm() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  e.preventDefault();
+  setError(null);
+  setLoading(true);
 
-    try {
-      const response = await fetch("http://localhost:8080/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          username: email,
-          password: password,
-        }),
-      });
+  try {
+    const response = await fetch("http://localhost:8080/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        username: email,
+        password: password,
+      }),
+      credentials: "include", // Inclui cookies (JSESSIONID)
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        // Login bem-sucedido
-        console.log("Login bem-sucedido:", data);
-        // Você pode armazenar o token ou sessão aqui, se necessário
-        // Por exemplo, localStorage.setItem("user", JSON.stringify(data));
-        navigate("/dashboard"); // Redireciona para uma página de dashboard (ajuste conforme necessário)
-      } else {
-        // Exibe mensagem de erro
-        setError(data.message || "Erro ao fazer login");
-      }
-    } catch (err) {
-      console.error("Erro na requisição:", err); 
-      setError("Erro ao conectar com o servidor: " + err.message);
-    } finally {
-      setLoading(false);
+    if (response.ok) {
+      console.log("Login bem-sucedido:", data);
+      localStorage.setItem("user", JSON.stringify(data)); // Armazena o usuário (opcional)
+      navigate("/dashboard"); // Redireciona para a homepage
+    } else {
+      setError(data.message || "Erro ao fazer login");
     }
-  };
+  } catch (err) {
+    console.error("Erro:", err.message);
+    setError("Erro ao conectar com o servidor");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">

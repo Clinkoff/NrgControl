@@ -93,6 +93,16 @@
   );
 }
 
+#DivEsquerda {
+  background-image: linear-gradient(
+        to top right,
+        #0A4E87 0%,
+        #236E9F 35%,
+        #84E8FB 56%,
+        #84E8FB 100%
+      );
+}
+
 @media (max-width: 767px) {
   #DivEsquerda {
     position: relative;

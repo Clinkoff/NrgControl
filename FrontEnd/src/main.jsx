@@ -1,19 +1,31 @@
-import React from "react"; 
-
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./assets/css/index.css";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LoginForm from "./pages/LoginForm.jsx";
 import RegisterForm from "./pages/RegisterForm.jsx";
+import HomePage from "./pages/HomePage.jsx";
 
-createRoot(document.getElementById("root")).render(
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginForm />,
+  },
+  {
+    path: "/registro",
+    element: <RegisterForm />,
+  },
+  {
+    path: "/dashboard",
+    element: <HomePage />,
+  },
+  {
+    path: "/",
+    element: <LoginForm />, // Página inicial padrão
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/registro" element={<RegisterForm />} />
-      </Routes>
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
