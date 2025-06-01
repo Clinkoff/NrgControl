@@ -1,453 +1,136 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import React from "react";
+import Navbar from "./Navbar";
+import Carousel from "./Carousel";
 
-function HomePage() {
-  const navigate = useNavigate();
-  const [authError, setAuthError] = useState(null);
-  const [consumoData, setConsumoData] = useState([]);
-  const [currentConsumo, setCurrentConsumo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedInterval, setSelectedInterval] = useState("Dia");
-  const [totalPower, setTotalPower] = useState(null);
-
-  const getDateRange = useCallback(() => {
-    const now = new Date();
-    let startDate;
-    switch (selectedInterval) {
-      case "7 Dias":
-        startDate = new Date(now.setDate(now.getDate() - 7)).toISOString();
-        break;
-      case "1 Mês":
-        startDate = new Date(now.setMonth(now.getMonth() - 1)).toISOString();
-        break;
-      case "Dia":
-      default:
-        startDate = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-        break;
-    }
-    return {
-      startDate,
-      endDate: new Date().toISOString(),
-    };
-  }, [selectedInterval]);
-
-  useEffect(() => {
-    const checkAuthAndFetchConsumo = async () => {
-      try {
-        const authResponse = await fetch("http://localhost:8080/api/usuarios/protegido", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!authResponse.ok) {
-          setAuthError("Usuário não autenticado");
-          navigate("/login");
-          return;
-        }
-
-        const fetchData = async () => {
-          try {
-            // Consumo em tempo real
-            const consumoResponse = await fetch("http://localhost:8080/api/consumo", {
-              method: "GET",
-              credentials: "include",
-            });
-
-            if (!consumoResponse.ok) {
-              throw new Error(`Erro ao buscar consumo: ${consumoResponse.status} ${consumoResponse.statusText}`);
-            }
-
-            const currentData = await consumoResponse.json();
-            setCurrentConsumo(currentData);
-
-            // Dados históricos
-            const { startDate, endDate } = getDateRange();
-            const historicoResponse = await fetch(
-              `http://localhost:8080/api/consumo/historico?startDate=${startDate}&endDate=${endDate}`,
-              {
-                method: "GET",
-                credentials: "include",
-              }
-            );
-
-            if (!historicoResponse.ok) {
-              throw new Error(`Erro ao buscar histórico: ${historicoResponse.status} ${historicoResponse.statusText}`);
-            }
-
-            const historicalData = await historicoResponse.json();
-            setConsumoData(historicalData);
-
-            // Consumo total acumulado
-            const totalResponse = await fetch(
-              `http://localhost:8080/api/consumo/total?startDate=${startDate}&endDate=${endDate}`,
-              {
-                method: "GET",
-                credentials: "include",
-              }
-            );
-
-            if (!totalResponse.ok) {
-              throw new Error(`Erro ao buscar total: ${totalResponse.status} ${totalResponse.statusText}`);
-            }
-
-            const total = await totalResponse.json();
-            setTotalPower(total);
-            setError(null);
-          } catch (err) {
-            console.error("Erro ao buscar dados:", err.message);
-            setError("Não foi possível carregar os dados. Tente novamente mais tarde.");
-          }
-        };
-
-        await fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
-      } catch (err) {
-        console.error("Erro ao conectar com o servidor:", err);
-        setAuthError("Erro ao conectar com o servidor");
-        navigate("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuthAndFetchConsumo();
-  }, [navigate, selectedInterval, getDateRange]);
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        localStorage.removeItem("user");
-        navigate("/login");
-      }
-    } catch (err) {
-      console.error("Erro ao fazer logout:", err);
-    }
-  };
-
-  if (authError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-8 py-6 rounded-lg shadow-lg">
-          <p className="text-xl font-medium">{authError}</p>
-          <button 
-            onClick={() => navigate('/login')}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-          >
-            Voltar ao login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
-        <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
-        <p className="mt-4 text-blue-300 text-xl">Carregando...</p>
-      </div>
-    );
-  }
-
+function Homepage() {
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 shadow-lg">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-500 rounded-full w-10 h-10 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <Navbar />
+      
+      {/* Carrossel Section */}
+      <div className="py-8 px-4">
+        <Carousel />
+      </div>
+      
+      <div className="flex justify-center items-center py-10 px-4">
+        <div className="bg-gradient-to-br from-[#0F2A63] via-[#1a3a7a] to-[#0d1f54] text-white rounded-3xl shadow-2xl w-full max-w-6xl p-8 md:p-12 space-y-10 relative overflow-hidden">
+          {/* Background decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-32 translate-x-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full translate-y-24 -translate-x-24"></div>
+          
+          {/* Legenda de status */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 relative z-10">
+            <div className="flex flex-wrap gap-6">
+              <span className="flex items-center space-x-3 group cursor-pointer">
+                <span className="w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300"></span>
+                <span className="text-sm font-medium group-hover:text-red-200 transition-colors">Urgente</span>
+              </span>
+              <span className="flex items-center space-x-3 group cursor-pointer">
+                <span className="w-5 h-5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300"></span>
+                <span className="text-sm font-medium group-hover:text-yellow-200 transition-colors">Alerta</span>
+              </span>
+              <span className="flex items-center space-x-3 group cursor-pointer">
+                <span className="w-5 h-5 bg-gradient-to-r from-green-400 to-green-500 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300"></span>
+                <span className="text-sm font-medium group-hover:text-green-200 transition-colors">Normal</span>
+              </span>
             </div>
-            <h1 className="text-2xl font-bold text-white">NRG Control</h1>
+            <div className="text-sm bg-gradient-to-r from-white to-gray-100 text-[#0F2A63] rounded-xl px-4 py-2 shadow-lg font-semibold">
+              📅 {new Date().toLocaleDateString("pt-BR")}
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-3 text-gray-300">
-              <span>Monitoramento</span>
-              <span>|</span>
-              <span className="text-blue-400">{selectedInterval}</span>
+
+          {/* Título */}
+          <div className="text-center relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent mb-2">
+              Resumo Semanal
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full mx-auto"></div>
+          </div>
+
+          {/* Informações principais */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+            {/* Consumo total */}
+            <div className="group cursor-pointer">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/20">
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">💡</div>
+                <h3 className="font-bold text-lg">Consumo Total da Semana</h3>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                  <p className="text-sm leading-relaxed">
+                    Você consumiu <span className="text-yellow-300 font-bold text-lg">220 kWh</span> nesta semana
+                  </p>
+                  <p className="text-xs text-blue-200 mt-2 italic">
+                    📈 6% a mais que na semana passada
+                  </p>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-              </svg>
-              Sair
+
+            {/* Média diária */}
+            <div className="group cursor-pointer">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/20">
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">📊</div>
+                <h3 className="font-bold text-lg">Média Diária de Consumo</h3>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                  <p className="text-sm">
+                    Média diária: <span className="text-green-300 font-bold text-xl">31,4 kWh</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dia com maior e menor consumo */}
+            <div className="group cursor-pointer">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/20">
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">⚡</div>
+                <h3 className="font-bold text-lg">Maior e Menor Consumo</h3>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 space-y-2">
+                  <p className="text-sm">
+                    <span className="text-red-300">📈 Maior:</span> <span className="font-semibold">Quarta-feira, 38,2 kWh</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-green-300">📉 Menor:</span> <span className="font-semibold">Domingo, 19,6 kWh</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Horário de pico */}
+            <div className="group cursor-pointer">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-4 hover:bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl border border-white/20">
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">🌐</div>
+                <h3 className="font-bold text-lg">Horário de Pico</h3>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 space-y-2">
+                  <p className="text-sm">
+                    <span className="text-orange-300">⏰ Maior gasto:</span> <span className="font-semibold">15h - 18h</span>
+                  </p>
+                  <p className="text-xs text-blue-200 italic mt-2">
+                    💡 Evite operação intensa neste horário
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Situação semanal + botão */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 pt-6 border-t border-white/20 relative z-10">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium">Situação semanal:</span>
+              <div className="flex items-center space-x-2">
+                <span className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full shadow-lg animate-pulse"></span>
+                <span className="text-yellow-300 font-semibold">Alerta</span>
+              </div>
+            </div>
+            <button className="bg-gradient-to-r from-white to-gray-100 text-[#0F2A63] font-bold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 hover:from-blue-50 hover:to-white group">
+              <span className="flex items-center space-x-2">
+                <span>Ver mais</span>
+                <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+              </span>
             </button>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Error message */}
-        {error && (
-          <div className="mb-8 bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-6 py-4 rounded-lg">
-            <p>{error}</p>
-          </div>
-        )}
-
-        {/* Controls & Summary */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
-            <p className="text-gray-400">Monitoramento de energia em tempo real</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-4">
-            <div className="relative">
-              <select
-                id="interval"
-                value={selectedInterval}
-                onChange={(e) => setSelectedInterval(e.target.value)}
-                className="appearance-none bg-gray-800 border border-gray-700 text-white py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Dia">Dia</option>
-                <option value="7 Dias">7 Dias</option>
-                <option value="1 Mês">1 Mês</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cards with current data */}
-        {currentConsumo && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-300">CPU</h3>
-                <div className="bg-blue-500 bg-opacity-20 rounded-full p-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{currentConsumo.cpuUsagePercent.toFixed(1)}</p>
-                <p className="ml-1 text-xl text-gray-400">%</p>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">Utilização atual</p>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-green-500 transition-all duration-300">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-300">Memória</h3>
-                <div className="bg-green-500 bg-opacity-20 rounded-full p-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{(currentConsumo.memoryUsageBytes / (1024 * 1024)).toFixed(1)}</p>
-                <p className="ml-1 text-xl text-gray-400">MB</p>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">Uso de memória</p>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-yellow-500 transition-all duration-300">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-300">Consumo Total</h3>
-                <div className="bg-yellow-500 bg-opacity-20 rounded-full p-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{currentConsumo.totalPowerWatts.toFixed(1)}</p>
-                <p className="ml-1 text-xl text-gray-400">W</p>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">Potência instantânea</p>
-            </div>
-
-            {currentConsumo.powerFromSensors > 0 && (
-              <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-purple-500 transition-all duration-300">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-300">Sensores</h3>
-                  <div className="bg-purple-500 bg-opacity-20 rounded-full p-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex items-baseline">
-                  <p className="text-3xl font-bold text-white">{currentConsumo.powerFromSensors.toFixed(1)}</p>
-                  <p className="ml-1 text-xl text-gray-400">W</p>
-                </div>
-                <p className="text-sm text-gray-400 mt-1">Consumo pelos sensores</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Total Power Card */}
-        {totalPower !== null && (
-          <div className="mb-8 bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl shadow-lg p-6 border border-gray-700">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-medium text-gray-300">Consumo Total Acumulado</h3>
-                <p className="text-sm text-gray-400">Período selecionado: {selectedInterval}</p>
-              </div>
-              <div className="bg-gray-900 bg-opacity-50 px-6 py-4 rounded-lg">
-                <div className="flex items-baseline">
-                  <p className="text-3xl font-bold text-white">{totalPower.toFixed(2)}</p>
-                  <p className="ml-2 text-xl text-gray-400">Wh</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Charts */}
-        {consumoData.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">Uso da CPU (%)</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timestamp" 
-                      stroke="#9CA3AF" 
-                      tickFormatter={(value) => new Date(value).toLocaleTimeString()} 
-                      tick={{fill: '#9CA3AF'}}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{fill: '#9CA3AF'}} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: "0.5rem" }} 
-                      labelFormatter={(label) => new Date(label).toLocaleString()} 
-                      itemStyle={{color: "#D1D5DB"}}
-                      labelStyle={{color: "#F9FAFB"}}
-                    />
-                    <Legend wrapperStyle={{color: "#D1D5DB", paddingTop: "10px"}} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="cpuUsagePercent" 
-                      name="CPU (%)" 
-                      stroke="#3B82F6" 
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 6, fill: "#3B82F6", stroke: "#1F2937", strokeWidth: 2 }} 
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">Uso de Memória (MB)</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timestamp" 
-                      stroke="#9CA3AF" 
-                      tickFormatter={(value) => new Date(value).toLocaleTimeString()} 
-                      tick={{fill: '#9CA3AF'}}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{fill: '#9CA3AF'}} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: "0.5rem" }} 
-                      labelFormatter={(label) => new Date(label).toLocaleString()} 
-                      itemStyle={{color: "#D1D5DB"}}
-                      labelStyle={{color: "#F9FAFB"}}
-                    />
-                    <Legend wrapperStyle={{color: "#D1D5DB", paddingTop: "10px"}} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="memoryUsageMb" 
-                      name="Memória (MB)" 
-                      stroke="#10B981" 
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 6, fill: "#10B981", stroke: "#1F2937", strokeWidth: 2 }} 
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 lg:col-span-2">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">Consumo Total (W)</h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="timestamp" 
-                      stroke="#9CA3AF" 
-                      tickFormatter={(value) => new Date(value).toLocaleTimeString()} 
-                      tick={{fill: '#9CA3AF'}}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{fill: '#9CA3AF'}} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: "0.5rem" }} 
-                      labelFormatter={(label) => new Date(label).toLocaleString()} 
-                      itemStyle={{color: "#D1D5DB"}}
-                      labelStyle={{color: "#F9FAFB"}}
-                    />
-                    <Legend wrapperStyle={{color: "#D1D5DB", paddingTop: "10px"}} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="totalPowerWatts" 
-                      name="Potência (W)" 
-                      stroke="#F59E0B" 
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 6, fill: "#F59E0B", stroke: "#1F2937", strokeWidth: 2 }} 
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-700 text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-xl text-gray-400">Aguardando dados históricos...</p>
-            <p className="text-sm text-gray-500 mt-2">Os dados aparecerão aqui quando estiverem disponíveis.</p>
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 border-t border-gray-700 py-6">
-        <div className="container mx-auto px-4 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} NRG Control - Monitoramento de Energia Inteligente</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
 
-export default HomePage;
+export default Homepage;

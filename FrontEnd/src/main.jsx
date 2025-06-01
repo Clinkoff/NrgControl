@@ -3,7 +3,8 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LoginForm from "./pages/LoginForm.jsx";
 import RegisterForm from "./pages/RegisterForm.jsx";
-import HomePage from "./pages/HomePage.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Homepage from "./pages/HomePage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -16,11 +17,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <HomePage />,
+    element: <Dashboard />,
+  },
+  {
+    path: "/Homepage",
+    element: <Homepage />,
   },
   {
     path: "/",
-    element: <LoginForm />, // Página inicial padrão
+    element: <Homepage />, // Página inicial padrão
   },
 ]);
 
