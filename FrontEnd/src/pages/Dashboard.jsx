@@ -11,8 +11,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Navbar from './Navbar';
+import consumoService from '../services/ConsumoService';
 
 function Dashboard() {
+  
   const navigate = useNavigate();
   const [authError, setAuthError] = useState(null);
   const [consumoData, setConsumoData] = useState([]);
@@ -21,113 +23,102 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [selectedInterval, setSelectedInterval] = useState("Dia");
   const [totalPower, setTotalPower] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  
-  const getDateRange = useCallback(() => {
-    const now = new Date();
-    let startDate;
-    switch (selectedInterval) {
-      case "7 Dias":
-        startDate = new Date(now.setDate(now.getDate() - 7)).toISOString();
-        break;
-      case "1 Mês":
-        startDate = new Date(now.setMonth(now.getMonth() - 1)).toISOString();
-        break;
-      case "Dia":
-      default:
-        startDate = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-        break;
-    }
-    return {
-      startDate,
-      endDate: new Date().toISOString(),
-    };
-  }, [selectedInterval]);
+  // Função auxiliar para garantir valores numéricos seguros
+  const safeNumber = (value, defaultValue = 0) => {
+    const num = Number(value);
+    return !isNaN(num) && isFinite(num) ? num : defaultValue;
+  };
 
-  useEffect(() => {
-    const checkAuthAndFetchConsumo = async () => {
-      try {
-        const authResponse = await fetch("http://localhost:8080/api/usuarios/protegido", {
-          method: "GET",
-          credentials: "include",
-        });
+  // Função para buscar todos os dados
+  const fetchAllData = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      setError(null);
 
-        if (!authResponse.ok) {
-          setAuthError("Usuário não autenticado");
-          navigate("/login");
-          return;
-        }
 
-        const fetchData = async () => {
-          try {
-            // Consumo em tempo real
-            const consumoResponse = await fetch("http://localhost:8080/api/consumo", {
-              method: "GET",
-              credentials: "include",
-            });
+      // Obter range de datas
+      const { startDate, endDate } = consumoService.getDateRange(selectedInterval);
 
-            if (!consumoResponse.ok) {
-              throw new Error(`Erro ao buscar consumo: ${consumoResponse.status} ${consumoResponse.statusText}`);
-            }
+      // Buscar todos os dados em paralelo
+      const dashboardData = await consumoService.getDashboardData(startDate, endDate);
 
-            const currentData = await consumoResponse.json();
-            setCurrentConsumo(currentData);
+      // Atualizar estados com verificações de segurança
+      setCurrentConsumo(dashboardData.current || null);
+      setConsumoData(consumoService.formatConsumoData(dashboardData.historico || []));
+      setTotalPower(safeNumber(dashboardData.total));
 
-            // Dados históricos
-            const { startDate, endDate } = getDateRange();
-            const historicoResponse = await fetch(
-              `http://localhost:8080/api/consumo/historico?startDate=${startDate}&endDate=${endDate}`,
-              {
-                method: "GET",
-                credentials: "include",
-              }
-            );
-
-            if (!historicoResponse.ok) {
-              throw new Error(`Erro ao buscar histórico: ${historicoResponse.status} ${historicoResponse.statusText}`);
-            }
-
-            const historicalData = await historicoResponse.json();
-            setConsumoData(historicalData);
-
-            // Consumo total acumulado
-            const totalResponse = await fetch(
-              `http://localhost:8080/api/consumo/total?startDate=${startDate}&endDate=${endDate}`,
-              {
-                method: "GET",
-                credentials: "include",
-              }
-            );
-
-            if (!totalResponse.ok) {
-              throw new Error(`Erro ao buscar total: ${totalResponse.status} ${totalResponse.statusText}`);
-            }
-
-            const total = await totalResponse.json();
-            setTotalPower(total);
-            setError(null);
-          } catch (err) {
-            console.error("Erro ao buscar dados:", err.message);
-            setError("Não foi possível carregar os dados. Tente novamente mais tarde.");
-          }
-        };
-
-        await fetchData();
-        const interval = setInterval(fetchData, 5000);
-        return () => clearInterval(interval);
-      } catch (err) {
-        console.error("Erro ao conectar com o servidor:", err);
-        setAuthError("Erro ao conectar com o servidor");
+    } catch (error) {
+      console.error('Erro ao buscar dados:', error);
+      
+      if (error.message.includes('401') || error.message.includes('403')) {
+        setAuthError("Usuário não autenticado");
         navigate("/login");
-      } finally {
-        setLoading(false);
+      } else {
+        setError("Não foi possível carregar os dados. Tente novamente mais tarde.");
+      }
+    } finally {
+      setRefreshing(false);
+      setLoading(false);
+    }
+  }, [navigate, selectedInterval]);
+
+  // Buscar apenas consumo atual (para updates em tempo real)
+  const fetchCurrentConsumo = useCallback(async () => {
+    try {
+      // Verificar se a função existe antes de chamar
+      if (typeof consumoService.getCurrentConsumo === 'function') {
+        const current = await consumoService.getCurrentConsumo();
+        setCurrentConsumo(current || null);
+      } else {
+        // Alternativa: buscar dados completos mas usar apenas o consumo atual
+        const { startDate, endDate } = consumoService.getDateRange("Dia");
+        const dashboardData = await consumoService.getDashboardData(startDate, endDate);
+        setCurrentConsumo(dashboardData.current || null);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar consumo atual:', error);
+      // Não mostrar erro para falhas pontuais do tempo real
+    }
+  }, []);
+
+  // Effect para carregar dados iniciais e configurar intervalo
+  useEffect(() => {
+    let intervalId;
+
+    const initializeDashboard = async () => {
+      await fetchAllData();
+      
+      // Configurar atualização em tempo real apenas para consumo atual
+      // Só configurar se não estiver carregando
+      if (!loading) {
+        intervalId = setInterval(fetchCurrentConsumo, 10000); // Aumentado para 10s para reduzir carga
       }
     };
 
-    checkAuthAndFetchConsumo();
-  }, [navigate, selectedInterval, getDateRange]);
+    initializeDashboard();
 
- 
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [fetchAllData, fetchCurrentConsumo, loading]);
+
+  // Effect separado para recarregar quando o intervalo mudar
+  useEffect(() => {
+    if (!loading) {
+      fetchAllData();
+    }
+  }, [selectedInterval, fetchAllData]);
+
+  // Função para atualizar dados manualmente
+  const handleRefresh = async () => {
+    await fetchAllData();
+  };
+
+  // Renderização de erro de autenticação
   if (authError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -144,6 +135,7 @@ function Dashboard() {
     );
   }
 
+  // Renderização de loading
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
@@ -161,8 +153,14 @@ function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         {/* Error message */}
         {error && (
-          <div className="mb-8 bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-6 py-4 rounded-lg">
+          <div className="mb-8 bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-6 py-4 rounded-lg flex justify-between items-center">
             <p>{error}</p>
+            <button 
+              onClick={handleRefresh}
+              className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
 
@@ -170,10 +168,24 @@ function Dashboard() {
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
-            <p className="text-gray-400">Monitoramento de energia em tempo real</p>
+            <p className="text-gray-400">
+              Monitoramento de energia em tempo real
+              {refreshing && <span className="ml-2 text-blue-400">(Atualizando...)</span>}
+            </p>
           </div>
           
           <div className="flex flex-wrap gap-4">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+            >
+              <svg className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Atualizar
+            </button>
+
             <div className="relative">
               <select
                 id="interval"
@@ -207,7 +219,9 @@ function Dashboard() {
                 </div>
               </div>
               <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{currentConsumo.cpuUsagePercent.toFixed(1)}</p>
+                <p className="text-3xl font-bold text-white">
+                  {safeNumber(currentConsumo.cpuUsagePercent).toFixed(1)}
+                </p>
                 <p className="ml-1 text-xl text-gray-400">%</p>
               </div>
               <p className="text-sm text-gray-400 mt-1">Utilização atual</p>
@@ -223,7 +237,9 @@ function Dashboard() {
                 </div>
               </div>
               <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{(currentConsumo.memoryUsageBytes / (1024 * 1024)).toFixed(1)}</p>
+                <p className="text-3xl font-bold text-white">
+                  {safeNumber(currentConsumo.memoryUsageBytes / (1024 * 1024)).toFixed(1)}
+                </p>
                 <p className="ml-1 text-xl text-gray-400">MB</p>
               </div>
               <p className="text-sm text-gray-400 mt-1">Uso de memória</p>
@@ -239,13 +255,35 @@ function Dashboard() {
                 </div>
               </div>
               <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">{currentConsumo.totalPowerWatts.toFixed(1)}</p>
+                <p className="text-3xl font-bold text-white">
+                  {safeNumber(currentConsumo.totalPowerWatts).toFixed(1)}
+                </p>
                 <p className="ml-1 text-xl text-gray-400">W</p>
               </div>
               <p className="text-sm text-gray-400 mt-1">Potência instantânea</p>
             </div>
 
-            {currentConsumo.powerFromSensors > 0 && (
+            {/* Card adicional para Custo Estimado se disponível */}
+            {currentConsumo.custoEstimado !== undefined && currentConsumo.custoEstimado !== null && (
+              <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-red-500 transition-all duration-300">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-gray-300">Custo/Hora</h3>
+                  <div className="bg-red-500 bg-opacity-20 rounded-full p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex items-baseline">
+                  <p className="text-3xl font-bold text-white">
+                    R$ {safeNumber(currentConsumo.custoEstimado).toFixed(4)}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-400 mt-1">Estimativa por hora</p>
+              </div>
+            )}
+
+            {currentConsumo.powerFromSensors !== undefined && safeNumber(currentConsumo.powerFromSensors) > 0 && (
               <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-purple-500 transition-all duration-300">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-300">Sensores</h3>
@@ -256,7 +294,9 @@ function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-baseline">
-                  <p className="text-3xl font-bold text-white">{currentConsumo.powerFromSensors.toFixed(1)}</p>
+                  <p className="text-3xl font-bold text-white">
+                    {safeNumber(currentConsumo.powerFromSensors).toFixed(1)}
+                  </p>
                   <p className="ml-1 text-xl text-gray-400">W</p>
                 </div>
                 <p className="text-sm text-gray-400 mt-1">Consumo pelos sensores</p>
@@ -275,9 +315,12 @@ function Dashboard() {
               </div>
               <div className="bg-gray-900 bg-opacity-50 px-6 py-4 rounded-lg">
                 <div className="flex items-baseline">
-                  <p className="text-3xl font-bold text-white">{totalPower.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-white">{safeNumber(totalPower).toFixed(2)}</p>
                   <p className="ml-2 text-xl text-gray-400">Wh</p>
                 </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  ≈ {(safeNumber(totalPower) / 1000).toFixed(3)} kWh
+                </p>
               </div>
             </div>
           </div>

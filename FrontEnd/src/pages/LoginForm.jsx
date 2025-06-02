@@ -32,7 +32,7 @@ function LoginForm() {
     if (response.ok) {
       console.log("Login bem-sucedido:", data);
       localStorage.setItem("user", JSON.stringify(data)); // Armazena o usuário (opcional)
-      navigate("/dashboard"); // Redireciona para a homepage
+      navigate("/homepage"); // Redireciona para a homepage
     } else {
       setError(data.message || "Erro ao fazer login");
     }
