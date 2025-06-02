@@ -19,7 +19,7 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 ## Tecnologias Utilizadas
 
 ### Backend
-- **Java 17**: Linguagem principal para o backend.
+- **Java 21**: Linguagem principal para o backend.
 - **Spring Boot 3**: Framework para construção da API RESTful.
 - **Spring Data JPA**: Para interação com o banco de dados.
 - **Spring Security**: Para autenticação e autorização.
@@ -43,7 +43,7 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 
 ### Geral
 - **Git**: Para clonar o repositório.
-- **Java 17**: Para rodar o backend.
+- **Java 21**: Para rodar o backend.
 - **Node.js 18+ e npm**: Para rodar o frontend.
 - **MySQL 8.0+**: Banco de dados configurado.
 
