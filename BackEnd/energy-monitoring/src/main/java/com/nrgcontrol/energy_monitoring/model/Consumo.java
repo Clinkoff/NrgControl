@@ -21,14 +21,29 @@ public class Consumo {
     private double totalPowerWatts;
 
     @Column(nullable = true)
-    private Double powerFromSensors; // Double para suportar NULL no MySQL
+    private Double powerFromSensors;
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    // NOVOS CAMPOS OPCIONAIS - O Hibernate vai criar automaticamente
+    @Column(nullable = true, length = 20)
+    private String loadProfile; // IDLE, OFFICE, GAMING, RENDERING
+
+    @Column(nullable = true)
+    private Double temperatureCpu; // Temperatura da CPU se disponível
+
+    @Column(nullable = true)
+    private Integer processCount; // Número de processos ativos
+
+    @Column(nullable = true, name = "custo_estimado")
+    private Double custoEstimado; // Custo estimado por hora baseado no consumo atual
+
+    // Construtores
     public Consumo() {
     }
 
+    // Construtor original (mantém compatibilidade)
     public Consumo(double cpuUsagePercent, long memoryUsageBytes, double totalPowerWatts, Double powerFromSensors) {
         this.cpuUsagePercent = cpuUsagePercent;
         this.memoryUsageBytes = memoryUsageBytes;
@@ -37,7 +52,22 @@ public class Consumo {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters e Setters
+    // Construtor completo (opcional)
+    public Consumo(double cpuUsagePercent, long memoryUsageBytes, double totalPowerWatts, 
+                   Double powerFromSensors, String loadProfile, Double temperatureCpu, 
+                   Integer processCount, Double custoEstimado) {
+        this.cpuUsagePercent = cpuUsagePercent;
+        this.memoryUsageBytes = memoryUsageBytes;
+        this.totalPowerWatts = totalPowerWatts;
+        this.powerFromSensors = powerFromSensors;
+        this.loadProfile = loadProfile;
+        this.temperatureCpu = temperatureCpu;
+        this.processCount = processCount;
+        this.custoEstimado = custoEstimado;
+        this.timestamp = LocalDateTime.now();
+    }
+
+    // Getters e Setters existentes
     public Long getId() {
         return id;
     }
@@ -84,5 +114,38 @@ public class Consumo {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    // Getters e Setters dos novos campos
+    public String getLoadProfile() {
+        return loadProfile;
+    }
+
+    public void setLoadProfile(String loadProfile) {
+        this.loadProfile = loadProfile;
+    }
+
+    public Double getTemperatureCpu() {
+        return temperatureCpu;
+    }
+
+    public void setTemperatureCpu(Double temperatureCpu) {
+        this.temperatureCpu = temperatureCpu;
+    }
+
+    public Integer getProcessCount() {
+        return processCount;
+    }
+
+    public void setProcessCount(Integer processCount) {
+        this.processCount = processCount;
+    }
+
+    public Double getCustoEstimado() {
+        return custoEstimado;
+    }
+
+    public void setCustoEstimado(Double custoEstimado) {
+        this.custoEstimado = custoEstimado;
     }
 }

@@ -44,15 +44,14 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorizeRequests ->
-                authorizeRequests
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/usuarios/**", "/api/login", "/api/logout").permitAll()
-                    .requestMatchers("/api/consumo", "/api/consumo/historico", "/api/consumo/media").authenticated()
-                    .requestMatchers("/api/dispositivos/**").hasRole("USER")
-                    .anyRequest().authenticated()
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/usuarios/**", "/api/login", "/api/logout").permitAll()
+                // Liberando todos os endpoints de consumo
+                .requestMatchers("/api/consumo/**").permitAll()
+                .requestMatchers("/api/dispositivos/**").hasRole("USER")
+                .anyRequest().authenticated()
             )
             .addFilterAt(customAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -68,19 +67,21 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
             );
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));  // Frontend Vite
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);  // Aplicado a todas as rotas
         return source;
     }
 
@@ -90,13 +91,13 @@ public class SecurityConfig {
             try {
                 System.out.println("Procurando usuário: " + email);
                 Usuario usuario = usuarioRepository.findByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+                        .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
                 return org.springframework.security.core.userdetails.User
-                    .withUsername(email)
-                    .password(usuario.getSenha_hash())
-                    .roles("USER")
-                    .build();
-            } catch (Exception e) {
+                        .withUsername(email)
+                        .password(usuario.getSenha_hash())
+                        .roles("USER")
+                        .build();
+                } catch (Exception e) {
                 System.err.println("Erro ao buscar usuário: " + e.getMessage());
                 throw new UsernameNotFoundException("Erro ao buscar usuário: " + email, e);
             }

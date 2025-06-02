@@ -1,6 +1,10 @@
 package com.nrgcontrol.energy_monitoring.controller.usuario;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +23,8 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @PostMapping
-    public Usuario criarUsuario(@RequestParam String nome, @RequestParam String email, @RequestParam String senha_hash) {
+    public Usuario criarUsuario(@RequestParam String nome, @RequestParam String email,
+            @RequestParam String senha_hash) {
         return usuarioService.criarUsuario(nome, email, senha_hash);
     }
 
@@ -29,9 +34,10 @@ public class UsuarioController {
     }
 
     @GetMapping("/protegido")
-    public String testeProtegido() {
-        // Retorna o nome do usuário autenticado
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return "Acesso concedido para " + username;
+    public ResponseEntity<Map<String, String>> protegido() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Accesso concedido");
+        return ResponseEntity.ok(response);
     }
 }
