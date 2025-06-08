@@ -34,7 +34,8 @@ public class ConsumoController {
         double custoHora = consumoService.calcularCustoEstimado(consumo.getTotalPowerWatts());
         response.put("custoEstimadoPorHora", custoHora);
         response.put("custoEstimadoPorDia", custoHora * 24);
-
+        response.put("cpuUsagePercent", consumo.getCpuUsagePercent());
+        
         return response;
     }
 

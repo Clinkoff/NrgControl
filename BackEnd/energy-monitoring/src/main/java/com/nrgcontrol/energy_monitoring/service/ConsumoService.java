@@ -27,7 +27,6 @@ public class ConsumoService {
     private final HardwareAbstractionLayer hal = si.getHardware();
     private final ConsumoRepository consumoRepository;
 
-    // Melhoria 6: Configuração externa
     @Value("${energy.tarifa-kwh:0.75}") // R$ 0,75 por kWh (média Brasil)
     private double tarifaKwh;
 
@@ -43,7 +42,6 @@ public class ConsumoService {
     @Value("${energy.gpu-idle-power:15.0}")
     private double basePowerGpuIdle;
 
-    // Constantes que podem ser configuráveis
     private static final double MEMORY_POWER_PER_GB = 0.75;
     private static final double BASE_POWER_OTHER = 20.0;
     private static final double LOAD_FACTOR_OTHER = 10.0;
@@ -59,18 +57,15 @@ public class ConsumoService {
         double cpuUsage = getCpuUsagePercent(processor);
         double totalPower = estimateTotalPower(cpuUsage, memoryUsageBytes);
         
-        // Melhoria 8: Validação básica
         validatePowerEstimate(totalPower);
         
         Double powerFromSensors = getPowerFromSensors();
 
         Consumo consumo = new Consumo(cpuUsage, memoryUsageBytes, totalPower, powerFromSensors);
         
-        // CALCULAR E SALVAR O CUSTO ESTIMADO por hora
         double custoHora = calcularCustoEstimado(totalPower);
         consumo.setCustoEstimado(custoHora);
         
-        // Detectar perfil de carga e salvar
         String loadProfile = detectLoadProfile(cpuUsage, memoryUsageBytes);
         consumo.setLoadProfile(loadProfile);
         
@@ -78,7 +73,6 @@ public class ConsumoService {
         return consumo;
     }
 
-    // Melhoria 9: Cache inteligente
     @Cacheable(value = "consumo-cache", key = "#startDate + '-' + #endDate", 
                condition = "#endDate.isBefore(T(java.time.LocalDateTime).now().minusHours(1))")
     public List<Consumo> getConsumoByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
@@ -90,7 +84,6 @@ public class ConsumoService {
         return average != null ? average : 0.0;
     }
 
-    // Melhoria 7: Melhorar precisão temporal
     public Double getTotalPowerByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         List<Consumo> consumos = consumoRepository.findByDateRange(startDate, endDate);
         if (consumos.isEmpty()) return 0.0;
@@ -98,14 +91,13 @@ public class ConsumoService {
         return calculateEnergyWithInterpolation(consumos);
     }
 
-    // MÉTODO PARA CALCULAR CUSTO - Adicionar aqui no Service
+    // MÉTODO PARA CALCULAR CUSTO 
     public double calcularCustoEstimado(double energiaWh) {
         // Converte Wh para kWh e multiplica pela tarifa
         double energiaKwh = energiaWh / 1000.0;
         return energiaKwh * tarifaKwh;
     }
 
-    // Método auxiliar para calcular custo de um período
     public double calcularCustoPeriodo(LocalDateTime startDate, LocalDateTime endDate) {
         Double totalEnergy = getTotalPowerByDateRange(startDate, endDate);
         return calcularCustoEstimado(totalEnergy != null ? totalEnergy : 0.0);
@@ -123,7 +115,7 @@ public class ConsumoService {
     }
 
     private double estimateTotalPower(double cpuUsage, long memoryUsageBytes) {
-        // Usar valores configuráveis
+
         double cpuLoadFactor = cpuUsage / 100.0;
         double cpuPower = basePowerCpuIdle + (maxPowerCpu - basePowerCpuIdle) * Math.pow(cpuLoadFactor, 1.5);
 
@@ -138,7 +130,6 @@ public class ConsumoService {
         return cpuPower + gpuPower + memoryPower + otherPower;
     }
 
-    // Melhoria 7: Interpolação para cálculo de energia
     private double calculateEnergyWithInterpolation(List<Consumo> consumos) {
         if (consumos.size() < 2) return 0.0;
         
@@ -160,7 +151,6 @@ public class ConsumoService {
         return totalEnergy;
     }
 
-    // Melhoria 8: Validação básica
     private void validatePowerEstimate(double power) {
         if (power < 10 || power > 500) {
             logger.warn("Estimativa de energia suspeita: {}W - Verifique os sensores", power);
@@ -170,7 +160,6 @@ public class ConsumoService {
         }
     }
 
-    // Detectar perfil de carga baseado no uso de CPU e memória
     private String detectLoadProfile(double cpuUsage, long memoryUsageBytes) {
         double memoryUsageGB = memoryUsageBytes / (1024.0 * 1024 * 1024);
         

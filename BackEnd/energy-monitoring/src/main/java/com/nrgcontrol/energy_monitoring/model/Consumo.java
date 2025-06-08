@@ -39,11 +39,9 @@ public class Consumo {
     @Column(nullable = true, name = "custo_estimado")
     private Double custoEstimado; // Custo estimado por hora baseado no consumo atual
 
-    // Construtores
     public Consumo() {
     }
 
-    // Construtor original (mantém compatibilidade)
     public Consumo(double cpuUsagePercent, long memoryUsageBytes, double totalPowerWatts, Double powerFromSensors) {
         this.cpuUsagePercent = cpuUsagePercent;
         this.memoryUsageBytes = memoryUsageBytes;
@@ -52,7 +50,6 @@ public class Consumo {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Construtor completo (opcional)
     public Consumo(double cpuUsagePercent, long memoryUsageBytes, double totalPowerWatts, 
                    Double powerFromSensors, String loadProfile, Double temperatureCpu, 
                    Integer processCount, Double custoEstimado) {
@@ -67,7 +64,6 @@ public class Consumo {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters e Setters existentes
     public Long getId() {
         return id;
     }
@@ -116,7 +112,6 @@ public class Consumo {
         this.timestamp = timestamp;
     }
 
-    // Getters e Setters dos novos campos
     public String getLoadProfile() {
         return loadProfile;
     }
