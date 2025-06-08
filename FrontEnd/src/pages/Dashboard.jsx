@@ -12,383 +12,307 @@ import {
 } from "recharts";
 import Navbar from "./Navbar";
 import consumoService from "../services/ConsumoService";
+import Footer from "./footer";
+
+// Componente de Card otimizado
+const MetricCard = ({ title, value, unit, color, icon, timestamp }) => (
+  <div
+    className={`bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-${color}-500 transition-all duration-300`}
+  >
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-lg font-medium text-gray-300">{title}</h3>
+      <div className={`bg-${color}-500 bg-opacity-20 rounded-full p-2`}>
+        {icon}
+      </div>
+    </div>
+    <div className="flex items-baseline">
+      <p className="text-3xl font-bold text-white">{value}</p>
+      {unit && <p className="ml-1 text-xl text-gray-400">{unit}</p>}
+    </div>
+    <div className="mt-2 flex items-center gap-1">
+      <div
+        className={`w-1 h-1 bg-${color}-400 rounded-full animate-pulse`}
+      ></div>
+      <span className="text-xs text-gray-500">{timestamp}</span>
+    </div>
+  </div>
+);
+
+// Componente de Chart otimizado
+const Chart = ({ data, dataKey, name, color, title }) => (
+  <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+    <h3 className="text-xl font-medium text-gray-300 mb-6">{title}</h3>
+    <div className="h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <XAxis
+            dataKey="timestamp"
+            stroke="#9CA3AF"
+            tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+            tick={{ fill: "#9CA3AF" }}
+          />
+          <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1F2937",
+              border: "1px solid #374151",
+              borderRadius: "0.5rem",
+            }}
+            labelFormatter={(label) => new Date(label).toLocaleString()}
+            itemStyle={{ color: "#D1D5DB" }}
+            labelStyle={{ color: "#F9FAFB" }}
+          />
+          <Legend wrapperStyle={{ color: "#D1D5DB", paddingTop: "10px" }} />
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            name={name}
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 6, fill: color, stroke: "#1F2937", strokeWidth: 2 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </div>
+);
+
+// Ícones como constantes
+const ICONS = {
+  cpu: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+    />
+  ),
+  cost: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  ),
+  power: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 10V3L4 14h7v7l9-11h-7z"
+    />
+  ),
+  refresh: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+    />
+  ),
+};
 
 function Dashboard() {
   const navigate = useNavigate();
-  const [authError, setAuthError] = useState(null);
-  const [consumoData, setConsumoData] = useState([]);
-  const [currentConsumo, setCurrentConsumo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedInterval, setSelectedInterval] = useState("Dia");
-  const [totalPower, setTotalPower] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const [state, setState] = useState({
+    authError: null,
+    consumoData: [],
+    currentConsumo: null,
+    loading: true,
+    error: null,
+    selectedInterval: "Dia",
+    totalPower: null,
+    refreshing: false,
+  });
 
   const intervalRef = useRef(null);
   const mountedRef = useRef(true);
   const lastUpdateRef = useRef(new Date());
 
-  const safeNumber = (value) => {
-    const num = Number(value);
-    return isNaN(num) ? 0 : num;
-  };
-
-  const safeSetState = (setter, value) => {
-    if (mountedRef.current) {
-      setter(value);
-    }
-  };
+  const safeNumber = (value) => (isNaN(Number(value)) ? 0 : Number(value));
+  const updateState = (updates) =>
+    mountedRef.current && setState((prev) => ({ ...prev, ...updates }));
 
   const fetchAllData = useCallback(
     async (showRefreshing = false, isAutoRefresh = false) => {
-        try {
-            if (showRefreshing && !isAutoRefresh) {
-                safeSetState(setRefreshing, true);
-            }
+      try {
+        if (showRefreshing && !isAutoRefresh) updateState({ refreshing: true });
+        if (!isAutoRefresh) updateState({ error: null });
 
-            if (!isAutoRefresh) {
-                safeSetState(setError, null);
-            }
+        const { startDate, endDate } = consumoService.getDateRange(
+          state.selectedInterval
+        );
+        const dashboardData = await consumoService.getDashboardData(
+          startDate,
+          endDate
+        );
 
-            console.log(`🔄 Fetching data... Auto-refresh: ${isAutoRefresh}`);
+        updateState({
+          currentConsumo: dashboardData.current,
+          consumoData: consumoService.formatConsumoData(
+            dashboardData.historico
+          ),
+          totalPower: dashboardData.total?.totalWatts,
+          loading: false,
+          refreshing: false,
+        });
 
-            const { startDate, endDate } =
-                consumoService.getDateRange(selectedInterval);
-            const dashboardData = await consumoService.getDashboardData(
-                startDate,
-                endDate
-            );
+        lastUpdateRef.current = new Date();
+      } catch (error) {
+        updateState({
+          error: `Falha ao carregar dados: ${error.message}`,
+          loading: false,
+          refreshing: false,
+        });
 
-            safeSetState(setCurrentConsumo, dashboardData.current);
-            safeSetState(setConsumoData, consumoService.formatConsumoData(dashboardData.historico));
-            safeSetState(setLoading, false);
-            safeSetState(setRefreshing, false);
-
-            console.log("DEBUG: dashboardData.total recebido:", dashboardData.total);
-            console.log("DEBUG: Valor de totalWatts:", dashboardData.total?.totalWatts);
-
-            safeSetState(setTotalPower, dashboardData.total?.totalWatts);
-
-            console.log("DEBUG: setTotalPower chamado!");
-
-        } catch (error) {
-            console.error("DEBUG: Erro em fetchAllData:", error);
-            safeSetState(setError, `Falha ao carregar dados: ${error.message}`);
-            safeSetState(setLoading, false);
-            safeSetState(setRefreshing, false);
-            if (error.message.includes("401") || error.message.includes("403")) {
-                safeSetState(setAuthError, "Sessão expirada ou não autorizada. Por favor, faça login novamente.");
-                setTimeout(() => navigate("/login"), 3000);
-            }
+        if (error.message.includes("401") || error.message.includes("403")) {
+          updateState({ authError: "Sessão expirada. Redirecionando..." });
+          setTimeout(() => navigate("/login"), 3000);
         }
+      }
     },
-    [selectedInterval, navigate] 
-);
+    [state.selectedInterval, navigate]
+  );
 
-  // Setup inicial
+  // Setup e cleanup
   useEffect(() => {
     mountedRef.current = true;
-
     return () => {
       mountedRef.current = false;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Inicialização do dashboard
+  // Inicialização e auto-refresh
   useEffect(() => {
-    const initializeDashboard = async () => {
-      console.log("🚀 Initializing dashboard...");
-      await fetchAllData(false, false);
-    };
-
-    initializeDashboard();
+    fetchAllData(false, false);
   }, [fetchAllData]);
 
   useEffect(() => {
-    const setupAutoRefresh = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
-      if (mountedRef.current && !loading) {
-        console.log("⏰ Setting up auto-refresh...");
-
-        intervalRef.current = setInterval(async () => {
-          console.log(
-            "🔄 Auto-refresh triggered at:",
-            new Date().toLocaleTimeString()
-          );
-          try {
-            await fetchAllData(false, true);
-          } catch (error) {
-            console.error("❌ Auto-refresh failed:", error);
-          }
-        }, 10000); // 10 segundos
-
-        console.log("✅ Auto-refresh interval configured");
-      }
-    };
-
-    if (!loading) {
-      setupAutoRefresh();
+    if (!state.loading) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => fetchAllData(false, true), 10000);
     }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [loading, fetchAllData]);
+    return () => intervalRef.current && clearInterval(intervalRef.current);
+  }, [state.loading, fetchAllData]);
 
   useEffect(() => {
-    if (!loading) {
-      console.log("📅 Interval changed to:", selectedInterval);
-      fetchAllData(false, false);
-    }
-  }, [selectedInterval, fetchAllData, loading]);
+    if (!state.loading) fetchAllData(false, false);
+  }, [state.selectedInterval, fetchAllData, state.loading]);
 
-  const handleRefresh = async () => {
-    console.log("🔄 Manual refresh triggered...");
-    await fetchAllData(true, false);
+  // Configuração dos cards
+  const getCardConfig = () => {
+    if (!state.currentConsumo) return [];
+
+    const timestamp = lastUpdateRef.current.toLocaleTimeString();
+    const cards = [
+      {
+        title: "CPU",
+        value: safeNumber(state.currentConsumo.cpuUsagePercent).toFixed(1),
+        unit: "%",
+        color: "blue",
+        icon: (
+          <svg
+            className="h-6 w-6 text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {ICONS.cpu}
+          </svg>
+        ),
+      },
+      {
+        title: "Custo Diário",
+        value: `R$ ${safeNumber(
+          state.currentConsumo.custoEstimadoPorDia
+        ).toFixed(2)}`,
+        color: "green",
+        icon: (
+          <svg
+            className="h-6 w-6 text-green-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {ICONS.cost}
+          </svg>
+        ),
+      },
+      {
+        title: "Consumo",
+        value: safeNumber(state.currentConsumo?.consumoWatts).toFixed(1),
+        unit: "W",
+        color: "yellow",
+        icon: (
+          <svg
+            className="h-6 w-6 text-yellow-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {ICONS.power}
+          </svg>
+        ),
+      },
+    ];
+
+    // Adicionar cards condicionais
+    if (state.currentConsumo.custoEstimado != null) {
+      cards.push({
+        title: "Custo/Hora",
+        value: `R$ ${safeNumber(state.currentConsumo.custoEstimado).toFixed(
+          4
+        )}`,
+        color: "red",
+        icon: (
+          <svg
+            className="h-6 w-6 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {ICONS.cost}
+          </svg>
+        ),
+      });
+    }
+
+    return cards.map((card) => ({ ...card, timestamp }));
   };
 
-  // Debug para monitorar mudanças no currentConsumo
-  useEffect(() => {
-    console.log("📊 CurrentConsumo state changed:", currentConsumo);
-  }, [currentConsumo]);
-  
-  useEffect(() => {
-    console.log("📊📊🎨 TotalPower state changed:", totalPower);
-  },[totalPower]);
+  // Configuração dos gráficos
+  const chartConfigs = [
+    {
+      dataKey: "cpuUsagePercent",
+      name: "CPU (%)",
+      color: "#3B82F6",
+      title: "Uso da CPU (%)",
+    },
+    {
+      dataKey: "memoryUsageMb",
+      name: "Memória (MB)",
+      color: "#10B981",
+      title: "Uso de Memória (MB)",
+    },
+    {
+      dataKey: "totalPowerWatts",
+      name: "Potência (W)",
+      color: "#F59E0B",
+      title: "Consumo (W)",
+      fullWidth: true,
+    },
+  ];
 
-  const renderCurrentCards = () => {
-    console.log("🎨 Rendering cards with currentConsumo:", currentConsumo);
-
-    if (!currentConsumo) {
-      return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 animate-pulse"
-            >
-              <div className="h-6 bg-gray-700 rounded mb-4"></div>
-              <div className="h-8 bg-gray-700 rounded mb-2"></div>
-              <div className="h-4 bg-gray-700 rounded"></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* CPU Card */}
-        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-300">CPU</h3>
-            <div className="bg-blue-500 bg-opacity-20 rounded-full p-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-baseline">
-            <p className="text-3xl font-bold text-white">
-              {safeNumber(currentConsumo.cpuUsagePercent).toFixed(1)}
-            </p>
-            <p className="ml-1 text-xl text-gray-400">%</p>
-          </div>
-          <p className="text-sm text-gray-400 mt-1">Utilização atual</p>
-          {/* Indicador de atualização */}
-          <div className="mt-2 flex items-center gap-1">
-            <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">
-              {lastUpdateRef.current.toLocaleTimeString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Custo Diaro*/}
-        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-green-500 transition-all duration-300">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-300">Custo Diário</h3>
-            <div className="bg-green-500 bg-opacity-20 rounded-full p-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-baseline">
-            <p className="text-3xl font-bold text-white">
-              R$ {safeNumber(currentConsumo.custoEstimadoPorDia).toFixed(2)}
-            </p>
-          </div>
-          <p className="text-sm text-gray-400 mt-1">
-            Estimativa de custo por dia
-          </p>
-          <div className="mt-2 flex items-center gap-1">
-            <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">
-              {lastUpdateRef.current.toLocaleTimeString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Power Card */}
-        <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-yellow-500 transition-all duration-300">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-300">Consumo</h3>
-            <div className="bg-yellow-500 bg-opacity-20 rounded-full p-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-yellow-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-          </div>
-          <div className="flex items-baseline">
-            <p className="text-3xl font-bold text-white">
-              {safeNumber(currentConsumo?.consumoWatts).toFixed(1)}
-            </p>
-            <p className="ml-1 text-xl text-gray-400">W</p>
-          </div>
-          <p className="text-sm text-gray-400 mt-1">
-            Potência total no intervalo
-          </p>
-          <div className="mt-2 flex items-center gap-1">
-            <div className="w-1 h-1 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">
-              {lastUpdateRef.current.toLocaleTimeString()}
-            </span>
-          </div>
-        </div>
-
-        {/* Cards condicionais */}
-        {currentConsumo.custoEstimado !== undefined &&
-          currentConsumo.custoEstimado !== null && (
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-red-500 transition-all duration-300">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-300">
-                  Custo/Hora
-                </h3>
-                <div className="bg-red-500 bg-opacity-20 rounded-full p-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-red-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">
-                  R$ {safeNumber(currentConsumo.custoEstimado).toFixed(4)}
-                </p>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">Estimativa por hora</p>
-              <div className="mt-2 flex items-center gap-1">
-                <div className="w-1 h-1 bg-red-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-500">
-                  {lastUpdateRef.current.toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
-          )}
-
-        {currentConsumo.powerFromSensors !== undefined &&
-          safeNumber(currentConsumo.powerFromSensors) > 0 && (
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 hover:border-purple-500 transition-all duration-300">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-300">Sensores</h3>
-                <div className="bg-purple-500 bg-opacity-20 rounded-full p-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-purple-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <p className="text-3xl font-bold text-white">
-                  {safeNumber(currentConsumo.powerFromSensors).toFixed(1)}
-                </p>
-                <p className="ml-1 text-xl text-gray-400">W</p>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">
-                Consumo pelos sensores
-              </p>
-              <div className="mt-2 flex items-center gap-1">
-                <div className="w-1 h-1 bg-purple-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-500">
-                  {lastUpdateRef.current.toLocaleTimeString()}
-                </span>
-              </div>
-            </div>
-          )}
-      </div>
-    );
-  };
-
-  if (authError) {
+  // Renders condicionais
+  if (state.authError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-8 py-6 rounded-lg shadow-lg">
-          <p className="text-xl font-medium">{authError}</p>
+        <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-8 py-6 rounded-lg">
+          <p className="text-xl font-medium">{state.authError}</p>
           <button
             onClick={() => navigate("/login")}
             className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
@@ -400,7 +324,7 @@ function Dashboard() {
     );
   }
 
-  if (loading) {
+  if (state.loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900">
         <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
@@ -414,12 +338,12 @@ function Dashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Error message */}
-        {error && (
+        {/* Error Alert */}
+        {state.error && (
           <div className="mb-8 bg-red-500 bg-opacity-10 border border-red-500 text-red-300 px-6 py-4 rounded-lg flex justify-between items-center">
-            <p>{error}</p>
+            <p>{state.error}</p>
             <button
-              onClick={handleRefresh}
+              onClick={() => fetchAllData(true)}
               className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
             >
               Tentar novamente
@@ -427,95 +351,58 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Controls & Summary */}
+        {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold text-white mb-2">Dashboard</h2>
             <p className="text-gray-400">
               Monitoramento de energia em tempo real
-              {refreshing && (
+              {state.refreshing && (
                 <span className="ml-2 text-blue-400">(Atualizando...)</span>
               )}
             </p>
-            <div className="flex items-center gap-2 mt-1">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  currentConsumo ? "bg-green-500" : "bg-red-500"
-                }`}
-              ></div>
-              <p className="text-xs text-gray-500">
-                {currentConsumo ? (
-                  <>
-                    Última atualização:{" "}
-                    {lastUpdateRef.current.toLocaleTimeString()}
-                    <span className="ml-2 text-green-400">
-                      (Auto-refresh ativo)
-                    </span>
-                  </>
-                ) : (
-                  "Aguardando dados..."
-                )}
-              </p>
-            </div>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex gap-4">
             <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+              onClick={() => fetchAllData(true)}
+              disabled={state.refreshing}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition flex items-center gap-2"
             >
               <svg
-                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${state.refreshing ? "animate-spin" : ""}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
+                {ICONS.refresh}
               </svg>
               Atualizar
             </button>
 
-            <div className="relative">
-              <select
-                id="interval"
-                value={selectedInterval}
-                onChange={(e) => setSelectedInterval(e.target.value)}
-                className="appearance-none bg-gray-800 border border-gray-700 text-white py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Dia">Dia</option>
-                <option value="7 Dias">7 Dias</option>
-                <option value="1 Mês">1 Mês</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
+            <select
+              value={state.selectedInterval}
+              onChange={(e) =>
+                updateState({ selectedInterval: e.target.value })
+              }
+              className="bg-gray-800 border border-gray-700 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Dia">Dia</option>
+              <option value="7 Dias">7 Dias</option>
+              <option value="1 Mês">1 Mês</option>
+            </select>
           </div>
         </div>
 
-        {/* CARDS OTIMIZADOS */}
-        {renderCurrentCards()}
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {getCardConfig().map((card, index) => (
+            <MetricCard key={index} {...card} />
+          ))}
+        </div>
 
-        {/* Total Power Card */}
-        {totalPower !== null && (
+        {/* Total Power */}
+        {state.totalPower !== null && (
           <div className="mb-8 bg-gradient-to-r from-gray-800 to-gray-700 rounded-xl shadow-lg p-6 border border-gray-700">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
@@ -523,18 +410,15 @@ function Dashboard() {
                   Consumo Total Acumulado
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Período selecionado: {selectedInterval}
+                  Período: {state.selectedInterval}
                 </p>
               </div>
               <div className="bg-gray-900 bg-opacity-50 px-6 py-4 rounded-lg">
-                <div className="flex items-baseline">
-                  <p className="text-3xl font-bold text-white">
-                    {safeNumber(totalPower).toFixed(2)}
-                  </p>
-                  <p className="ml-2 text-xl text-gray-400">Wh</p>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  ≈ {(safeNumber(totalPower) / 1000).toFixed(3)} kWh
+                <p className="text-3xl font-bold text-white">
+                  {safeNumber(state.totalPower).toFixed(2)} Wh
+                </p>
+                <p className="text-sm text-gray-500">
+                  ≈ {(safeNumber(state.totalPower) / 1000).toFixed(3)} kWh
                 </p>
               </div>
             </div>
@@ -542,196 +426,26 @@ function Dashboard() {
         )}
 
         {/* Charts */}
-        {consumoData.length > 0 ? (
+        {state.consumoData.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">
-                Uso da CPU (%)
-              </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis
-                      dataKey="timestamp"
-                      stroke="#9CA3AF"
-                      tickFormatter={(value) =>
-                        new Date(value).toLocaleTimeString()
-                      }
-                      tick={{ fill: "#9CA3AF" }}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "1px solid #374151",
-                        borderRadius: "0.5rem",
-                      }}
-                      labelFormatter={(label) =>
-                        new Date(label).toLocaleString()
-                      }
-                      itemStyle={{ color: "#D1D5DB" }}
-                      labelStyle={{ color: "#F9FAFB" }}
-                    />
-                    <Legend
-                      wrapperStyle={{ color: "#D1D5DB", paddingTop: "10px" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="cpuUsagePercent"
-                      name="CPU (%)"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{
-                        r: 6,
-                        fill: "#3B82F6",
-                        stroke: "#1F2937",
-                        strokeWidth: 2,
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            {chartConfigs.map((config, index) => (
+              <div
+                key={index}
+                className={config.fullWidth ? "lg:col-span-2" : ""}
+              >
+                <Chart data={state.consumoData} {...config} />
               </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">
-                Uso de Memória (MB)
-              </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis
-                      dataKey="timestamp"
-                      stroke="#9CA3AF"
-                      tickFormatter={(value) =>
-                        new Date(value).toLocaleTimeString()
-                      }
-                      tick={{ fill: "#9CA3AF" }}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "1px solid #374151",
-                        borderRadius: "0.5rem",
-                      }}
-                      labelFormatter={(label) =>
-                        new Date(label).toLocaleString()
-                      }
-                      itemStyle={{ color: "#D1D5DB" }}
-                      labelStyle={{ color: "#F9FAFB" }}
-                    />
-                    <Legend
-                      wrapperStyle={{ color: "#D1D5DB", paddingTop: "10px" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="memoryUsageMb"
-                      name="Memória (MB)"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{
-                        r: 6,
-                        fill: "#10B981",
-                        stroke: "#1F2937",
-                        strokeWidth: 2,
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 lg:col-span-2">
-              <h3 className="text-xl font-medium text-gray-300 mb-6">
-                Consumo (W)
-              </h3>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={consumoData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis
-                      dataKey="timestamp"
-                      stroke="#9CA3AF"
-                      tickFormatter={(value) =>
-                        new Date(value).toLocaleTimeString()
-                      }
-                      tick={{ fill: "#9CA3AF" }}
-                    />
-                    <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1F2937",
-                        border: "1px solid #374151",
-                        borderRadius: "0.5rem",
-                      }}
-                      labelFormatter={(label) =>
-                        new Date(label).toLocaleString()
-                      }
-                      itemStyle={{ color: "#D1D5DB" }}
-                      labelStyle={{ color: "#F9FAFB" }}
-                    />
-                    <Legend
-                      wrapperStyle={{ color: "#D1D5DB", paddingTop: "10px" }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="totalPowerWatts"
-                      name="Potência (W)"
-                      stroke="#F59E0B"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{
-                        r: 6,
-                        fill: "#F59E0B",
-                        stroke: "#1F2937",
-                        strokeWidth: 2,
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            ))}
           </div>
         ) : (
           <div className="bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-700 text-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 mx-auto text-gray-500 mb-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
             <p className="text-xl text-gray-400">
               Aguardando dados históricos...
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Os dados aparecerão aqui quando estiverem disponíveis.
             </p>
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 border-t border-gray-700 py-6">
-        <div className="container mx-auto px-4 text-center text-gray-400">
-          <p>
-            © {new Date().getFullYear()} NRG Control - Monitoramento de Energia
-            Inteligente
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -208,6 +208,7 @@ class ConsumoService {
       timestamp: new Date(item.timestamp).toISOString(),
     }));
   }
+  
 }
 
 const consumoService = new ConsumoService();

@@ -1,13 +1,14 @@
 import "../assets/css/register.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import Footer from "./footer";
 
 function RegisterForm() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,9 +16,9 @@ function RegisterForm() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -100,8 +101,8 @@ function RegisterForm() {
             </h1>
 
             <p className="text-lg text-gray-600 animate-slide-in delay-200">
-              Crie sua conta e tenha acesso completo ao monitoramento inteligente
-              da sua energia elétrica
+              Crie sua conta e tenha acesso completo ao monitoramento
+              inteligente da sua energia elétrica
             </p>
 
             {/* Elementos decorativos Hover */}
@@ -122,10 +123,16 @@ function RegisterForm() {
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {error && <div className="text-red-500 text-center bg-red-100 p-2 rounded">{error}</div>}
-              
+              {error && (
+                <div className="text-red-500 text-center bg-red-100 p-2 rounded">
+                  {error}
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium mb-1">Nome Completo</label>
+                <label className="block text-sm font-medium mb-1">
+                  Nome Completo
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -165,7 +172,9 @@ function RegisterForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Confirmar Senha</label>
+                <label className="block text-sm font-medium mb-1">
+                  Confirmar Senha
+                </label>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -197,6 +206,7 @@ function RegisterForm() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

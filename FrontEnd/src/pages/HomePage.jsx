@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "./Navbar";
 import Carousel from "./Carousel";
+import Footer from "./footer";
 
 function Homepage() {
   return (
@@ -129,6 +130,7 @@ function Homepage() {
           </div>
         </div>
       </div>
+                    <Footer />
     </div>
   );
 }

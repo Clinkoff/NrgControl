@@ -1,6 +1,7 @@
 import "../assets/css/login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import Footer from "./footer";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -139,6 +140,7 @@ function LoginForm() {
           </div>
         </div>
       </div>
+                    <Footer />
     </div>
   );
 }
