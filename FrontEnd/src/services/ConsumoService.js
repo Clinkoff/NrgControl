@@ -171,7 +171,7 @@ class ConsumoService {
       endDate: agora.toISOString(),
     };
   }
-
+  
   // Método estático para acessar instância
   static getDashboardData(startDate, endDate) {
     return consumoService.getDashboardData(startDate, endDate);
