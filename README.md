@@ -10,12 +10,132 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 - **Frontend**: Uma interface React para visualização dos dados em tempo real e históricos.
 - **Banco de Dados**: MySQL para persistência de dados históricos.
 
-## Funcionalidades Principais
-- Monitoramento em tempo real do uso de CPU, memória e consumo energético.
-- Armazenamento de dados históricos.
-- Visualização de dados por intervalos (dia, 7 dias, 1 mês).
-- Autenticação de usuários para acesso seguro.
+# Requisitos Funcionais (RFs) - NRG Control
 
+Os Requisitos Funcionais detalham as funcionalidades e serviços que o sistema NRG Control deve fornecer, descrevendo o que o usuário pode fazer e como o sistema deve responder.
+
+## RF001: Autenticação de Usuário
+
+**Descrição:** O sistema deve permitir que os usuários façam login para acessar as funcionalidades restritas.
+
+**Atores:** Usuário
+
+**Pré-condições:** O usuário possui um cadastro prévio no sistema.
+
+**Pós-condições:** O usuário é autenticado e redirecionado para a HomePage ou recebe uma mensagem de erro em caso de falha.
+
+**Detalhes:**
+- O usuário deve fornecer credenciais válidas (usuário e senha).
+- Em caso de credenciais inválidas, o sistema deve exibir uma mensagem de erro clara.
+
+## RF002: Registro de Usuário
+
+**Descrição:** O sistema deve permitir que novos usuários se registrem na aplicação.
+
+**Atores:** Usuário
+
+**Pré-condições:** Nenhuma.
+
+**Pós-condições:** Um novo registro de usuário é criado no banco de dados e o usuário pode fazer login.
+
+**Detalhes:**
+- O usuário deve preencher um formulário com as informações necessárias (ex: nome de usuário, senha, e-mail).
+- O sistema deve validar os dados de entrada (ex: formato de e-mail, complexidade da senha).
+
+## RF003: Acesso ao Dashboard de Monitoramento
+
+**Descrição:** O usuário deve ser capaz de acessar o dashboard de monitoramento de energia.
+
+**Atores:** Usuário
+
+**Pré-condições:** O usuário está logado no sistema.
+
+**Pós-condições:** O dashboard é carregado com as informações de monitoramento em tempo real ou mensagem de erro se os dados não puderem ser carregados.
+
+**Detalhes:**
+- Pode ser acessado através do "resumo semanal" na HomePage.
+- Pode ser acessado através da opção "Dashboard" na barra de navegação (navBar).
+
+## RF004: Exibição de Métricas em Tempo Real
+
+**Descrição:** O dashboard deve exibir as métricas de consumo de energia em tempo real.
+
+**Atores:** Usuário
+
+**Pré-condições:** O usuário acessou o dashboard.
+
+**Pós-condições:** Gráficos interativos exibindo "Uso da CPU (%)", "Uso de Memória (MB)" e "Consumo (W)" são apresentados e atualizados.
+
+**Detalhes:**
+- As métricas devem ser atualizadas a cada 10 segundos.
+- As métricas coletadas incluem Uso da CPU (%), Uso da Memória (MB) e Consumo de Potência (Watts).
+- A visualização será conforme a imagem1.
+- Ao passar o mouse (hover) sobre os gráficos, detalhes específicos dos pontos de dados (ex: valor e horário) devem ser exibidos.
+
+## RF005: Cálculo e Exibição de Custo Estimado
+
+**Descrição:** O sistema deve calcular e exibir o custo estimado do consumo de energia.
+
+**Atores:** Usuário
+
+**Pré-condições:** Dados de consumo de Watts estão disponíveis.
+
+**Pós-condições:** O custo estimado de consumo é exibido no dashboard.
+
+**Detalhes:**
+- O cálculo envolve a conversão de Watts para KWh e a multiplicação pelo valor da tarifa KWA (configurável, se aplicável, embora não explicitado como configurável no documento).
+
+## RF006: Armazenamento de Dados Históricos
+
+**Descrição:** O sistema deve armazenar os dados de monitoramento de forma histórica.
+
+**Atores:** Sistema
+
+**Pré-condições:** Dados de monitoramento são coletados.
+
+**Pós-condições:** Os dados são persistidos no banco de dados MySQL.
+
+**Detalhes:**
+- A granularidade de armazenamento é a cada 10 segundos.
+- Os dados serão armazenados até que uma limpeza de cache ou um "truncate" do banco de dados seja realizado.
+
+## RF007: Exibição do Resumo Semanal
+
+**Descrição:** O sistema deve apresentar um resumo semanal do consumo de energia em um dashboard.
+
+**Atores:** Usuário
+
+**Pré-condições:** Dados históricos de consumo estão disponíveis.
+
+**Pós-condições:** O resumo semanal é exibido, contendo o consumo total, a média diária e o pico de consumo da semana.
+
+## RF008: Visualização de Artigos
+
+**Descrição:** O sistema deve permitir que os usuários visualizem artigos informativos.
+
+**Atores:** Usuário
+
+**Pré-condições:** Artigos estão disponíveis no sistema.
+
+**Pós-condições:** O usuário consegue navegar e ler o conteúdo dos artigos.
+
+**Detalhes:**
+- Os artigos serão categorizados.
+- Não haverá funcionalidade de comentários nos artigos.
+- A adição de novos artigos é feita diretamente pelo desenvolvedor na release.
+
+## RF009: Tratamento de Erros na Coleta/Exibição de Dados
+
+**Descrição:** O sistema deve informar ao usuário quando houver falha na coleta ou exibição dos dados de monitoramento.
+
+**Atores:** Usuário, Sistema
+
+**Pré-condições:** Ocorre uma falha ao tentar carregar ou coletar dados.
+
+**Pós-condições:** Uma imagem de erro é exibida para o usuário (conforme imagem2).
+
+**Detalhes:**
+- A mensagem de erro deve ser clara e indicar a impossibilidade de carregar os dados.
 ## Tecnologias Utilizadas
 
 ### Backend
@@ -35,8 +155,7 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 - **Node.js 18+ e npm**: Para gerenciamento de pacotes e execução do frontend.
 
 ### Outras Ferramentas
-- **Postman**: Para testes de API.
-- **MySQL Workbench**: Para gerenciamento do banco de dados (opcional).
+- **MySQL Workbench**: Para gerenciamento do banco de dados.
 - **Git**: Controle de versão.
 
 ## Pré-requisitos para Rodar o Projeto
@@ -51,3 +170,11 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 1. Instale o MySQL e crie um banco chamado `energy_monitoring`:
    ```sql
    CREATE DATABASE energy_monitoring;
+
+### Configuração Backend 
+- mvn install
+- mvn spring-boot:run
+- 
+### Configuração FrontEnd
+- npm install
+- npm run dev
