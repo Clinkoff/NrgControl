@@ -83,7 +83,7 @@ Os Requisitos Funcionais detalham as funcionalidades e serviços que o sistema N
 **Pós-condições:** O custo estimado de consumo é exibido no dashboard.
 
 **Detalhes:**
-- O cálculo envolve a conversão de Watts para KWh e a multiplicação pelo valor da tarifa KWA (configurável, se aplicável, embora não explicitado como configurável no documento).
+- O cálculo envolve a conversão de Watts para KWh e a multiplicação pelo valor da tarifa.
 
 ## RF006: Armazenamento de Dados Históricos
 
