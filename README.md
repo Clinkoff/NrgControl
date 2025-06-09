@@ -21,7 +21,8 @@ Sem ferramentas de monitoramento eficientes, torna-se difícil para o usuário:
 - **Calcular o impacto financeiro real** do uso contínuo de um computador.
 - **Determinar se a manutenção ou a substituição** de um dispositivo específico por um mais eficiente seria, de fato, economicamente vantajosa.
 
-Essa lacuna de conhecimento leva a um desperdício energético potencial e à impossibilidade de implementar estratégias eficazes de economia, resultando em surpresas desagradáveis na fatura de energia e na sensação de descontrole sobre os gastos. O problema reside na **invisibilidade do consumo energético**, que impede ações proativas para a redução de custos e a promoção de hábitos mais sustentáveis.
+Essa lacuna de conhecimento leva a um desperdício energético potencial e à impossibilidade de implementar estratégias eficazes de economia, resultando em surpresas desagradáveis na fatura de energia e na sensação de descontrole sobre os gastos. O problema reside na invisibilidade do consumo energético, que impede ações proativas para a redução de custos e a promoção de hábitos mais sustentáveis.
+
 ---
 # Requisitos Funcionais (RFs) - NRG Control
 
