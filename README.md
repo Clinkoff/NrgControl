@@ -254,10 +254,35 @@ Os Requisitos Funcionais detalham as funcionalidades e serviços que o sistema N
    ```sql
    CREATE DATABASE energy_monitoring;
 
-### Configuração Backend 
-- mvn install
-- mvn spring-boot:run
-- 
+# Configuração Backend
+
+## Comandos de Execução
+```bash
+mvn install
+mvn spring-boot:run
+```
+
+## Configuração do Banco de Dados (application.properties)
+```properties
+# Configuração do DataSource MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/energy_monitoring
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Configuração JPA/Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+## Observações
+- **Banco de Dados**: MySQL rodando na porta padrão 3306
+- **Schema**: `energy_monitoring`
+- **Hibernate DDL**: Configurado para `update` (atualiza automaticamente o schema)
+- **SQL Logging**: Habilitado para debug (`show-sql=true` e `format_sql=true`)
+
 ### Configuração FrontEnd
 - npm install
 - npm run dev
