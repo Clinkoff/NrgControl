@@ -10,6 +10,19 @@ O projeto abrange o desenvolvimento de um sistema completo com backend e fronten
 - **Frontend**: Uma interface React para visualização dos dados em tempo real e históricos.
 - **Banco de Dados**: MySQL para persistência de dados históricos.
 
+## Problema
+
+Em um cenário onde os custos com energia elétrica representam uma parcela significativa das despesas mensais, muitos consumidores (sejam indivíduos ou pequenas empresas) enfrentam o desafio de **contas de luz elevadas** sem compreenderem a **origem exata** de seus gastos. A falta de visibilidade sobre o consumo de energia de seus dispositivos eletrônicos, como computadores, impede a identificação de 'vilões' no consumo e a tomada de decisões informadas para otimizar o uso da energia.
+
+Sem ferramentas de monitoramento eficientes, torna-se difícil para o usuário:
+
+- **Identificar quais equipamentos consomem mais energia** em determinados períodos.
+- **Entender o padrão de consumo** de seus dispositivos ao longo do dia, da semana ou do mês.
+- **Calcular o impacto financeiro real** do uso contínuo de um computador.
+- **Determinar se a manutenção ou a substituição** de um dispositivo específico por um mais eficiente seria, de fato, economicamente vantajosa.
+
+Essa lacuna de conhecimento leva a um desperdício energético potencial e à impossibilidade de implementar estratégias eficazes de economia, resultando em surpresas desagradáveis na fatura de energia e na sensação de descontrole sobre os gastos. O problema reside na **invisibilidade do consumo energético**, que impede ações proativas para a redução de custos e a promoção de hábitos mais sustentáveis.
+---
 # Requisitos Funcionais (RFs) - NRG Control
 
 Os Requisitos Funcionais detalham as funcionalidades e serviços que o sistema NRG Control deve fornecer, descrevendo o que o usuário pode fazer e como o sistema deve responder.
