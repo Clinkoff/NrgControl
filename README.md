@@ -136,6 +136,75 @@ Os Requisitos Funcionais detalham as funcionalidades e serviços que o sistema N
 
 **Detalhes:**
 - A mensagem de erro deve ser clara e indicar a impossibilidade de carregar os dados.
+
+---
+
+# Requisitos Não Funcionais (RNFs) - NRG Control
+
+## RNF001: Desempenho
+
+### RNF001.1: Tempo de Resposta
+
+**Descrição:** O sistema deve carregar os dados no dashboard e responder às interações do usuário em um tempo aceitável.
+
+**Métrica:** O tempo máximo de resposta para o carregamento do dashboard e gráficos em tempo real não deve exceder 2 segundos.
+
+**Prioridade:** Essencial
+
+### RNF001.2: Escalabilidade de Dispositivos
+
+**Descrição:** O sistema deve ser arquitetado de forma a permitir futuras expansões para monitorar diferentes tipos de dispositivos (ex: tomadas, ar-condicionado).
+
+**Métrica:** A arquitetura do sistema deve suportar a adição de novos tipos de dispositivos, cada um com seu próprio dashboard de monitoramento separado. (Este é um requisito de arquitetura que impacta a escalabilidade, não uma métrica de "números" no momento, mas sim uma capacidade futura).
+
+**Prioridade:** Desejável
+
+### RNF001.3: Volume de Dados
+
+**Descrição:** O sistema deve ser capaz de gerenciar e persistir um volume de dados que esteja dentro dos limites operacionais e de desempenho do MySQL.
+
+**Métrica:** O sistema deve suportar o volume de dados gerado pela coleta a cada 10 segundos para múltiplos dispositivos, sem degradação significativa de desempenho dentro dos limites do MySQL 8.0+.
+
+**Prioridade:** Essencial
+
+## RNF002: Usabilidade
+
+### RNF002.1: Intuitividade da Interface
+
+**Descrição:** A interface do usuário deve ser fácil de entender e usar para um novo usuário.
+
+**Métrica:** Um novo usuário deve ser capaz de navegar e compreender as funcionalidades básicas do sistema (login, dashboard, visualização de gráficos) em no máximo 5 minutos, sem necessidade de treinamento.
+
+**Prioridade:** Essencial
+
+### RNF002.2: Feedback ao Usuário
+
+**Descrição:** O sistema deve fornecer feedback claro e imediato sobre o status das operações ou erros.
+
+**Métrica:** O feedback deve ser apresentado através de `divs` informativas contendo um ícone e uma mensagem descritiva (ex: "carregando...", "dados atualizados", "erro de conexão").
+
+**Prioridade:** Essencial
+
+## RNF003: Confiabilidade
+
+### RNF003.1: Disponibilidade
+
+**Descrição:** O sistema deve estar disponível para uso continuamente.
+
+**Métrica:** O sistema deve ter 100% de disponibilidade, desde que haja uma conexão ativa com a internet e os servidores estejam operacionais.
+
+**Prioridade:** Essencial
+
+### RNF003.2: Recuperação de Erros de Requisição
+
+**Descrição:** O sistema deve permitir a recuperação de erros de requisição.
+
+**Métrica:** Em caso de falha na requisição de dados, o usuário deve ser capaz de recarregar a página (F5) para tentar restabelecer a exibição das informações. (Considera-se que o "F5" é a solução inicial providenciada para recuperação).
+
+**Prioridade:** Essencial
+
+
+  
 ## Tecnologias Utilizadas
 
 ### Backend
