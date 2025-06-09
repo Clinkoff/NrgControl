@@ -278,7 +278,6 @@ spring.jpa.properties.hibernate.format_sql=true
 ```
 
 ## Observações
-- **Banco de Dados**: MySQL rodando na porta padrão 3306
 - **Schema**: `energy_monitoring`
 - **Hibernate DDL**: Configurado para `update` (atualiza automaticamente o schema)
 - **SQL Logging**: Habilitado para debug (`show-sql=true` e `format_sql=true`)
