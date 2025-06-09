@@ -265,9 +265,9 @@ mvn spring-boot:run
 ## Configuração do Banco de Dados (application.properties)
 ```properties
 # Configuração do DataSource MySQL
-spring.datasource.url=jdbc:mysql://localhost:3306/energy_monitoring
-spring.datasource.username=root
-spring.datasource.password=root
+spring.datasource.url=jdbc:mysql://localhost:seuLocalHost/energy_monitoring
+spring.datasource.username= seu userName
+spring.datasource.password= sua senha
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 # Configuração JPA/Hibernate
